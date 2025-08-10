@@ -923,8 +923,6 @@
         let editingProductId = null;
         let editingBudgetId = null;
         let editingReceiptId = null;
-        let autoSaveInterval;
-        let lastAutoSave = null;
 
         // Gerenciamento de tema
         function toggleTheme() {
@@ -969,104 +967,6 @@
                 console.log('Não foi possível salvar preferência de tema');
             }
         }
-
-        // Sistema de Auto-Save
-function autoSave() {
-    const clientName = document.getElementById('clientName').value.trim();
-    if (clientName && currentBudget.items.length > 0) {
-        const autoSaveData = {
-            client: clientName,
-            date: document.getElementById('budgetDate').value,
-            notes: document.getElementById('budgetNotes').value,
-            items: [...currentBudget.items],
-            images: [...currentBudget.images],
-            type: currentBudget.type,
-            adjustments: [...currentBudget.adjustments],
-            lastSaved: new Date().toLocaleString('pt-BR')
-        };
-        
-        window.autoSaveData = autoSaveData;
-        lastAutoSave = new Date();
-        showAutoSaveIndicator();
-    }
-}
-
-function showAutoSaveIndicator() {
-    const existing = document.getElementById('autoSaveIndicator');
-    if (existing) existing.remove();
-    
-    const indicator = document.createElement('div');
-    indicator.id = 'autoSaveIndicator';
-    indicator.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #28a745;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-    indicator.textContent = '💾 Auto-salvo às ' + lastAutoSave.toLocaleTimeString();
-    document.body.appendChild(indicator);
-    
-    setTimeout(() => indicator.style.opacity = '1', 100);
-    setTimeout(() => {
-        indicator.style.opacity = '0';
-        setTimeout(() => indicator.remove(), 300);
-    }, 2000);
-}
-
-function loadAutoSave() {
-    if (window.autoSaveData && confirm('Encontrei um rascunho salvo automaticamente. Deseja carregá-lo?')) {
-        const data = window.autoSaveData;
-        document.getElementById('clientName').value = data.client;
-        document.getElementById('budgetDate').value = data.date;
-        document.getElementById('budgetNotes').value = data.notes;
-        
-        currentBudget.type = data.type;
-        document.getElementById('budgetType').checked = data.type === 'budget';
-        document.getElementById('receiptType').checked = data.type === 'receipt';
-        
-        currentBudget.images = data.images || [];
-        displayImages();
-        
-        currentBudget.adjustments = data.adjustments || [];
-        
-        document.getElementById('budgetItems').innerHTML = '';
-        currentBudget.items = [];
-        
-        data.items.forEach((item, index) => {
-            addBudgetItem();
-            const itemElement = document.querySelector(`[data-index="${index}"]`);
-            itemElement.querySelector('.product-select').value = item.productId;
-            itemElement.querySelector('.quantity-input').value = item.quantity;
-            itemElement.querySelector('.meters-input').value = item.meters;
-            itemElement.querySelector('.notes-input').value = item.notes;
-            updateBudgetItem(index);
-        });
-        
-        updateDocumentType();
-        parseNotesAdjustments();
-        showAlert('Rascunho carregado com sucesso!', 'success');
-    }
-}
-
-function startAutoSave() {
-    if (autoSaveInterval) clearInterval(autoSaveInterval);
-    autoSaveInterval = setInterval(autoSave, 30000);
-}
-
-function stopAutoSave() {
-    if (autoSaveInterval) {
-        clearInterval(autoSaveInterval);
-        autoSaveInterval = null;
-    }
-}
 
         // Funções de salvamento LOCAL
         function saveData() {
@@ -1274,13 +1174,21 @@ function stopAutoSave() {
             displayImages();
         }
 
-if (tabName !== 'create-budget') {
-    stopAutoSave();
-    resetCurrentBudget();
-} else {
-    startAutoSave();
-    setTimeout(loadAutoSave, 500);
-}
+        // Gerenciamento de Abas
+        function showTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName !== 'create-budget') {
+                resetCurrentBudget();
+            }
+        }
 
         // Gerenciamento de Produtos
         function openProductModal(productId = null) {
