@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier PA - Orçamentos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            min-width: 140px;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .nav-tab.active {
+            color: #4facfe;
+            background: white;
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Estilo especial para textarea de observações */
+        .notes-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .notes-help {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(86, 171, 47, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(86, 171, 47, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 65, 108, 0.4);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            margin: 0 5px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            padding-left: 50px;
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            z-index: 1;
+        }
+
+        .list-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .list-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .item-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            color: #666;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .budget-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 120px;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .budget-total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .budget-total h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .budget-total p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .budget-adjustments {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .budget-adjustments h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .adjustment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .adjustment-item:last-child {
+            border-bottom: none;
+        }
+
+        .adjustment-positive {
+            color: #28a745;
+        }
+
+        .adjustment-negative {
+            color: #dc3545;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .close {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        /* Image upload styles */
+        .image-upload-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #e9ecef;
+            text-align: center;
+        }
+
+        .image-upload-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .images-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .image-preview {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .image-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 65, 108, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .document-type-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .document-type-selector h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option:hover {
+            border-color: #4facfe;
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            color: #4facfe;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .budget-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .radio-group {
+                flex-direction: column;
+            }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da, #f1b2b2);
+            color: #721c24;
+            border: 1px solid #f1b2b2;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .container {
+            background: #2d2d44;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .nav-tabs {
+            background: #3a3a5c;
+            border-bottom-color: #4a4a6a;
+        }
+
+        body.dark-mode .nav-tab {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .nav-tab:hover {
+            background: #4a4a6a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .nav-tab.active {
+            background: #2d2d44;
+            color: #4facfe;
+        }
+
+        body.dark-mode .form-control {
+            background: #3a3a5c;
+            border-color: #4a4a6a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-control:focus {
+            background: #4a4a6a;
+            border-color: #4facfe;
+        }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .notes-help {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .list-container {
+            background: #3a3a5c;
+        }
+
+        body.dark-mode .list-item {
+            background: #4a4a6a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .list-item:hover {
+            background: #5a5a7a;
+        }
+
+        body.dark-mode .item-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .detail-label {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .budget-item {
+            background: #3a3a5c;
+        }
+
+        body.dark-mode .budget-adjustments {
+            background: #3a3a5c;
+        }
+
+        body.dark-mode .budget-adjustments h4 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .adjustment-item {
+            border-bottom-color: #4a4a6a;
+        }
+
+        body.dark-mode .modal-content {
+            background: #2d2d44;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .modal-header {
+            border-bottom-color: #4a4a6a;
+        }
+
+        body.dark-mode .modal-header h2 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .close {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .close:hover {
+            background: #3a3a5c;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .document-type-selector {
+            background: #3a3a5c;
+        }
+
+        body.dark-mode .document-type-selector h3 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .radio-option {
+            background: #4a4a6a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .radio-option:hover {
+            border-color: #4facfe;
+            background: #5a5a7a;
+        }
+
+        body.dark-mode .image-upload-section {
+            background: #3a3a5c;
+            border-color: #4a4a6a;
+        }
+
+        body.dark-mode .image-upload-section h3 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .alert-success {
+            background: linear-gradient(135deg, #1e4d2b, #2d5a3d);
+            color: #90ee90;
+            border-color: #2d5a3d;
+        }
+
+        body.dark-mode .alert-danger {
+            background: linear-gradient(135deg, #4d1e1e, #5a2d2d);
+            color: #ffb3b3;
+            border-color: #5a2d2d;
+        }
+
+        /* Theme transition */
+        *, *::before, *::after {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+                🌙 Modo Escuro
+            </button>
+            <h1>🎨 Orçamentos & Notas</h1>
+            <p>Design Gráfico • Fachadas • Placas • Banners</p>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('products')">📦 Produtos</button>
+            <button class="nav-tab" onclick="showTab('budgets')">💰 Orçamentos</button>
+            <button class="nav-tab" onclick="showTab('receipts')">📃 Notas</button>
+            <button class="nav-tab" onclick="showTab('create-budget')">✨ Criar Documento</button>
+        </div>
+        
+        <div class="content">
+            <!-- Tab Produtos -->
+            <div id="products" class="tab-content active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2>Gerenciar Produtos</h2>
+                    <button class="btn btn-primary" onclick="openProductModal()">+ Adicionar Produto</button>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="productSearch" class="form-control" placeholder="Pesquisar produtos..." onkeyup="searchProducts()">
+                </div>
+                
+                <div id="productsList" class="list-container"></div>
+            </div>
+
+            <!-- Tab Orçamentos -->
+            <div id="budgets" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2>Meus Orçamentos</h2>
+                    <button class="btn btn-primary" onclick="showTab('create-budget')">+ Novo Orçamento</button>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="budgetSearch" class="form-control" placeholder="Pesquisar orçamentos..." onkeyup="searchBudgets()">
+                </div>
+                
+                <div id="budgetsList" class="list-container"></div>
+            </div>
+
+            <!-- Tab Notas/Recibos -->
+            <div id="receipts" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2>Minhas Notas</h2>
+                    <button class="btn btn-primary" onclick="showTab('create-budget')">+ Nova Nota</button>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="receiptSearch" class="form-control" placeholder="Pesquisar notas..." onkeyup="searchReceipts()">
+                </div>
+                
+                <div id="receiptsList" class="list-container"></div>
+            </div>
+
+            <!-- Tab Criar Orçamento/Nota -->
+            <div id="create-budget" class="tab-content">
+                <!-- Seletor de tipo de documento -->
+                <div class="document-type-selector">
+                    <h3>Tipo de Documento</h3>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="budgetType" name="documentType" value="budget" checked onchange="updateDocumentType()">
+                            <label for="budgetType">💰 Orçamento (Calcular valores)</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="receiptType" name="documentType" value="receipt" onchange="updateDocumentType()">
+                            <label for="receiptType">📃 Nota/Recibo (Para receber)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 id="documentTitle">Criar Novo Orçamento</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clientName">Nome do Cliente *</label>
+                        <input type="text" id="clientName" class="form-control" placeholder="Digite o nome do cliente" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="budgetDate">Data do Documento</label>
+                        <input type="date" id="budgetDate" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="budgetNotes">Observações Gerais</label>
+                    <textarea id="budgetNotes" class="form-control notes-textarea" rows="4" placeholder="Prazo, forma de pagamento, condições especiais..." onchange="parseNotesAdjustments()"></textarea>
+                    <div class="notes-help">
+                        💡 <strong>Dica:</strong> Use +100.00 para adicionar valor ou -50.00 para descontar do total
+                    </div>
+                </div>
+
+                <!-- Seção de upload de imagens -->
+                <div class="image-upload-section">
+                    <h3>📸 Imagens (Opcional)</h3>
+                    <p>Adicione imagens relacionadas ao documento</p>
+                    <label for="imageInput" class="file-input-label">
+                        📁 Selecionar Imagens
+                    </label>
+                    <input type="file" id="imageInput" class="file-input" multiple accept="image/*" onchange="handleImageUpload(event)">
+                    <div id="imagesPreview" class="images-preview"></div>
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0;" id="itemsTitle">Itens do Orçamento</h3>
+                
+                <div id="budgetItems">
+                    <!-- Items serão adicionados dinamicamente -->
+                </div>
+                
+                <button class="btn btn-primary" onclick="addBudgetItem()" id="addItemBtn">+ Adicionar Item</button>
+                
+                <div class="budget-total" id="budgetTotalSection" style="display: none;">
+                    <h3 id="totalTitle">Total do Orçamento</h3>
+                    <p id="budgetTotal">R$ 0,00</p>
+                    <div id="budgetAdjustments" class="budget-adjustments" style="display: none;">
+                        <h4>Ajustes:</h4>
+                        <div id="adjustmentsList"></div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-success" onclick="saveBudget()" id="saveBtn">💾 Salvar Orçamento</button>
+                        <button class="btn btn-primary" onclick="generatePDF()" style="margin-left: 10px;">📄 Gerar PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Produto -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productModalTitle">Adicionar Produto</h2>
+                <button class="close" onclick="closeProductModal()">&times;</button>
+            </div>
+            
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Nome do Produto *</label>
+                    <input type="text" id="productName" class="form-control" placeholder="Ex: Banner Frontlight, Placa ACM, Layout Design" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pricePerMeter">Preço por Metro (R$)</label>
+                        <input type="number" id="pricePerMeter" class="form-control" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="pricePerUnit">Preço por Unidade (R$) *</label>
+                        <input type="number" id="pricePerUnit" class="form-control" step="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productNotes">Observações</label>
+                    <textarea id="productNotes" class="form-control" rows="3" placeholder="Detalhes técnicos, tipo de material, impressão..."></textarea>
+                </div>
+                
+                <div style="text-align: right; margin-top: 30px;">
+                    <button type="button" class="btn btn-danger" onclick="closeProductModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success" style="margin-left: 10px;">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Dados em memória
+        let products = [];
+        let budgets = [];
+        let receipts = [];
+        let currentBudget = {
+            client: '',
+            date: '',
+            notes: '',
+            items: [],
+            total: 0,
+            images: [],
+            type: 'budget',
+            adjustments: []
+        };
+        let editingProductId = null;
+        let editingBudgetId = null;
+        let editingReceiptId = null;
+        let autoSaveInterval;
+        let lastAutoSave = null;
+
+        // Gerenciamento de tema
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                themeToggle.innerHTML = '☀️ Modo Claro';
+                window.themePreference = 'dark';
+            } else {
+                themeToggle.innerHTML = '🌙 Modo Escuro';
+                window.themePreference = 'light';
+            }
+            
+            saveThemePreference();
+        }
+
+        function loadThemePreference() {
+            try {
+                const savedTheme = window.themePreference || 'light';
+                const body = document.body;
+                const themeToggle = document.getElementById('themeToggle');
+                
+                if (savedTheme === 'dark') {
+                    body.classList.add('dark-mode');
+                    themeToggle.innerHTML = '☀️ Modo Claro';
+                } else {
+                    body.classList.remove('dark-mode');
+                    themeToggle.innerHTML = '🌙 Modo Escuro';
+                }
+            } catch(e) {
+                console.log('Não foi possível carregar preferência de tema');
+            }
+        }
+
+        function saveThemePreference() {
+            try {
+                saveData();
+            } catch(e) {
+                console.log('Não foi possível salvar preferência de tema');
+            }
+        }
+
+        // Sistema de Auto-Save
+function autoSave() {
+    const clientName = document.getElementById('clientName').value.trim();
+    if (clientName && currentBudget.items.length > 0) {
+        const autoSaveData = {
+            client: clientName,
+            date: document.getElementById('budgetDate').value,
+            notes: document.getElementById('budgetNotes').value,
+            items: [...currentBudget.items],
+            images: [...currentBudget.images],
+            type: currentBudget.type,
+            adjustments: [...currentBudget.adjustments],
+            lastSaved: new Date().toLocaleString('pt-BR')
+        };
+        
+        window.autoSaveData = autoSaveData;
+        lastAutoSave = new Date();
+        showAutoSaveIndicator();
+    }
+}
+
+function showAutoSaveIndicator() {
+    const existing = document.getElementById('autoSaveIndicator');
+    if (existing) existing.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'autoSaveIndicator';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    indicator.textContent = '💾 Auto-salvo às ' + lastAutoSave.toLocaleTimeString();
+    document.body.appendChild(indicator);
+    
+    setTimeout(() => indicator.style.opacity = '1', 100);
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+        setTimeout(() => indicator.remove(), 300);
+    }, 2000);
+}
+
+function loadAutoSave() {
+    if (window.autoSaveData && confirm('Encontrei um rascunho salvo automaticamente. Deseja carregá-lo?')) {
+        const data = window.autoSaveData;
+        document.getElementById('clientName').value = data.client;
+        document.getElementById('budgetDate').value = data.date;
+        document.getElementById('budgetNotes').value = data.notes;
+        
+        currentBudget.type = data.type;
+        document.getElementById('budgetType').checked = data.type === 'budget';
+        document.getElementById('receiptType').checked = data.type === 'receipt';
+        
+        currentBudget.images = data.images || [];
+        displayImages();
+        
+        currentBudget.adjustments = data.adjustments || [];
+        
+        document.getElementById('budgetItems').innerHTML = '';
+        currentBudget.items = [];
+        
+        data.items.forEach((item, index) => {
+            addBudgetItem();
+            const itemElement = document.querySelector(`[data-index="${index}"]`);
+            itemElement.querySelector('.product-select').value = item.productId;
+            itemElement.querySelector('.quantity-input').value = item.quantity;
+            itemElement.querySelector('.meters-input').value = item.meters;
+            itemElement.querySelector('.notes-input').value = item.notes;
+            updateBudgetItem(index);
+        });
+        
+        updateDocumentType();
+        parseNotesAdjustments();
+        showAlert('Rascunho carregado com sucesso!', 'success');
+    }
+}
+
+function startAutoSave() {
+    if (autoSaveInterval) clearInterval(autoSaveInterval);
+    autoSaveInterval = setInterval(autoSave, 30000);
+}
+
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+    }
+}
+
+        // Funções de salvamento LOCAL
+        function saveData() {
+            try {
+                const data = {
+                    products: products,
+                    budgets: budgets,
+                    receipts: receipts,
+                    theme: window.themePreference || 'light'
+                };
+                window.appData = data;
+            } catch(e) {
+                console.log('Não foi possível salvar dados');
+            }
+        }
+
+        function loadData() {
+            try {
+                if (window.appData) {
+                    products = window.appData.products || [];
+                    budgets = window.appData.budgets || [];
+                    receipts = window.appData.receipts || [];
+                    window.themePreference = window.appData.theme || 'light';
+                } else {
+                    loadSampleData();
+                }
+            } catch(e) {
+                console.log('Não foi possível carregar dados salvos');
+                loadSampleData();
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('budgetDate').value = new Date().toISOString().split('T')[0];
+            loadData();
+            if (products.length === 0) loadSampleData();
+            displayProducts();
+            displayBudgets();
+            displayReceipts();
+            updateDocumentType();
+            loadThemePreference();
+        });
+
+        // Dados de exemplo
+        function loadSampleData() {
+            products = [
+                {
+                    id: 1,
+                    name: 'Banner Frontlight',
+                    pricePerMeter: 25.00,
+                    pricePerUnit: 15.00,
+                    notes: 'Material resistente para uso externo'
+                },
+                {
+                    id: 2,
+                    name: 'Placa ACM',
+                    pricePerMeter: 0,
+                    pricePerUnit: 80.00,
+                    notes: 'Alumínio composto, acabamento premium'
+                },
+                {
+                    id: 3,
+                    name: 'Layout Design',
+                    pricePerMeter: 0,
+                    pricePerUnit: 150.00,
+                    notes: 'Criação de layout personalizado'
+                }
+            ];
+            saveData();
+        }
+
+        // Função para processar ajustes nas observações
+        function parseNotesAdjustments() {
+            const notes = document.getElementById('budgetNotes').value;
+            const adjustmentRegex = /([+-]\d+(?:\.\d{2})?)/g;
+            const matches = notes.match(adjustmentRegex);
+            
+            currentBudget.adjustments = [];
+            
+            if (matches) {
+                matches.forEach(match => {
+                    const value = parseFloat(match);
+                    if (!isNaN(value)) {
+                        currentBudget.adjustments.push({
+                            value: value,
+                            text: match
+                        });
+                    }
+                });
+            }
+            
+            updateBudgetTotal();
+        }
+
+        // Gerenciamento de tipo de documento
+        function updateDocumentType() {
+            const isBudget = document.getElementById('budgetType').checked;
+            const documentTitle = document.getElementById('documentTitle');
+            const itemsTitle = document.getElementById('itemsTitle');
+            const totalTitle = document.getElementById('totalTitle');
+            const saveBtn = document.getElementById('saveBtn');
+            const addItemBtn = document.getElementById('addItemBtn');
+            
+            currentBudget.type = isBudget ? 'budget' : 'receipt';
+            
+            if (isBudget) {
+                documentTitle.textContent = editingBudgetId ? 'Editar Orçamento' : 'Criar Novo Orçamento';
+                itemsTitle.textContent = 'Itens do Orçamento';
+                totalTitle.textContent = 'Total do Orçamento';
+                saveBtn.textContent = '💾 Salvar Orçamento';
+                addItemBtn.textContent = '+ Adicionar Item';
+            } else {
+                documentTitle.textContent = editingReceiptId ? 'Editar Nota' : 'Criar Nova Nota';
+                itemsTitle.textContent = 'Itens da Nota';
+                totalTitle.textContent = 'Informações da Nota';
+                saveBtn.textContent = '💾 Salvar Nota';
+                addItemBtn.textContent = '+ Adicionar Item';
+            }
+            
+            updateBudgetTotal();
+        }
+
+        // Função para redimensionar imagens
+        function resizeImage(file, maxWidth = 800, maxHeight = 600, quality = 0.8) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Calcular novas dimensões mantendo proporção
+                    let { width, height } = img;
+                    
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = (width * maxHeight) / height;
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Desenhar imagem redimensionada
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Converter para base64
+                    const resizedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(resizedDataUrl);
+                };
+                
+                // Criar URL da imagem original
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Gerenciamento de imagens
+        async function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    try {
+                        // Redimensionar imagem
+                        const resizedDataUrl = await resizeImage(file);
+                        
+                        const imageData = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            data: resizedDataUrl
+                        };
+                        currentBudget.images.push(imageData);
+                        displayImages();
+                    } catch (error) {
+                        console.error('Erro ao processar imagem:', error);
+                        showAlert('Erro ao processar imagem: ' + file.name, 'danger');
+                    }
+                }
+            }
+            event.target.value = ''; // Reset input
+        }
+
+        function displayImages() {
+            const container = document.getElementById('imagesPreview');
+            container.innerHTML = currentBudget.images.map(image => `
+                <div class="image-preview">
+                    <img src="${image.data}" alt="Imagem">
+                    <button class="image-remove" onclick="removeImage('${image.id}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(imageId) {
+            currentBudget.images = currentBudget.images.filter(img => img.id != imageId);
+            displayImages();
+        }
+
+if (tabName !== 'create-budget') {
+    stopAutoSave();
+    resetCurrentBudget();
+} else {
+    startAutoSave();
+    setTimeout(loadAutoSave, 500);
+}
+
+        // Gerenciamento de Produtos
+        function openProductModal(productId = null) {
+            editingProductId = productId;
+            const modal = document.getElementById('productModal');
+            const title = document.getElementById('productModalTitle');
+            
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                title.textContent = 'Editar Produto';
+                document.getElementById('productName').value = product.name;
+                document.getElementById('pricePerMeter').value = product.pricePerMeter || '';
+                document.getElementById('pricePerUnit').value = product.pricePerUnit;
+                document.getElementById('productNotes').value = product.notes || '';
+            } else {
+                title.textContent = 'Adicionar Produto';
+                document.getElementById('productForm').reset();
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            editingProductId = null;
+        }
+
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productData = {
+                name: document.getElementById('productName').value,
+                pricePerMeter: parseFloat(document.getElementById('pricePerMeter').value) || 0,
+                pricePerUnit: parseFloat(document.getElementById('pricePerUnit').value),
+                notes: document.getElementById('productNotes').value
+            };
+
+            if (editingProductId) {
+                const productIndex = products.findIndex(p => p.id === editingProductId);
+                products[productIndex] = { ...products[productIndex], ...productData };
+                showAlert('Produto atualizado com sucesso!', 'success');
+            } else {
+                productData.id = Date.now();
+                products.push(productData);
+                showAlert('Produto adicionado com sucesso!', 'success');
+            }
+
+            saveData();
+            displayProducts();
+            closeProductModal();
+        });
+
+        function deleteProduct(productId) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                products = products.filter(p => p.id !== productId);
+                saveData();
+                displayProducts();
+                showAlert('Produto excluído com sucesso!', 'success');
+            }
+        }
+
+        function displayProducts() {
+            const container = document.getElementById('productsList');
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                (product.notes && product.notes.toLowerCase().includes(searchTerm))
+            );
+
+            if (filteredProducts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            container.innerHTML = filteredProducts.map(product => `
+                <div class="list-item">
+                    <div class="item-header">
+                        <div class="item-title">${product.name}</div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary btn-sm" onclick="openProductModal(${product.id})">✏️ Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${product.id})">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                    <div class="item-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Preço por Metro:</span>
+                            <span>${product.pricePerMeter > 0 ? formatCurrency(product.pricePerMeter) : '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Preço por Unidade:</span>
+                            <span>${formatCurrency(product.pricePerUnit)}</span>
+                        </div>
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <span class="detail-label">Observações:</span>
+                            <span>${product.notes || 'Nenhuma observação'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchProducts() {
+            displayProducts();
+        }
+
+        // Gerenciamento de Orçamentos
+        function addBudgetItem() {
+            const itemsContainer = document.getElementById('budgetItems');
+            const itemIndex = currentBudget.items.length;
+            const isBudget = currentBudget.type === 'budget';
+            
+            const itemHtml = `
+                <div class="budget-item" data-index="${itemIndex}">
+                    <div class="form-group">
+                        <label>Produto *</label>
+                        <select class="form-control product-select" onchange="updateBudgetItem(${itemIndex})">
+                            <option value="">Selecione um produto</option>
+                            ${products.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade *</label>
+                        <input type="number" class="form-control quantity-input" min="1" value="1" onchange="updateBudgetItem(${itemIndex})">
+                    </div>
+                    <div class="form-group">
+                        <label>Metros</label>
+                        <input type="number" class="form-control meters-input" step="0.1" onchange="updateBudgetItem(${itemIndex})">
+                    </div>
+                    <div class="form-group">
+                        <label>Observações</label>
+                        <input type="text" class="form-control notes-input" placeholder="Observações do item">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <span class="subtotal" style="font-weight: bold; color: #4facfe;">${isBudget ? 'R$ 0,00' : 'Item'}</span>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeBudgetItem(${itemIndex})">🗑️</button>
+                    </div>
+                </div>
+            `;
+            
+            itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            
+            currentBudget.items.push({
+                productId: null,
+                product: null,
+                quantity: 1,
+                meters: 0,
+                notes: '',
+                subtotal: 0
+            });
+            
+            updateBudgetTotal();
+        }
+
+        function removeBudgetItem(index) {
+            const itemElement = document.querySelector(`[data-index="${index}"]`);
+            itemElement.remove();
+            currentBudget.items.splice(index, 1);
+            
+            // Reindexar elementos restantes
+            const remainingItems = document.querySelectorAll('.budget-item');
+            remainingItems.forEach((item, newIndex) => {
+                item.setAttribute('data-index', newIndex);
+                const productSelect = item.querySelector('.product-select');
+                const quantityInput = item.querySelector('.quantity-input');
+                const metersInput = item.querySelector('.meters-input');
+                const removeBtn = item.querySelector('.btn-danger');
+                
+                productSelect.setAttribute('onchange', `updateBudgetItem(${newIndex})`);
+                quantityInput.setAttribute('onchange', `updateBudgetItem(${newIndex})`);
+                metersInput.setAttribute('onchange', `updateBudgetItem(${newIndex})`);
+                removeBtn.setAttribute('onclick', `removeBudgetItem(${newIndex})`);
+            });
+            
+            updateBudgetTotal();
+        }
+
+        function updateBudgetItem(index) {
+            const item = document.querySelector(`[data-index="${index}"]`);
+            const productId = parseInt(item.querySelector('.product-select').value);
+            const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+            const meters = parseFloat(item.querySelector('.meters-input').value) || 0;
+            const notes = item.querySelector('.notes-input').value;
+            
+            const product = products.find(p => p.id === productId);
+            let subtotal = 0;
+            
+            if (product && quantity > 0 && currentBudget.type === 'budget') {
+                subtotal = (quantity * product.pricePerUnit) + (meters * product.pricePerMeter);
+            }
+            
+            currentBudget.items[index] = {
+                productId,
+                product,
+                quantity,
+                meters,
+                notes,
+                subtotal
+            };
+            
+            const subtotalElement = item.querySelector('.subtotal');
+            if (currentBudget.type === 'budget') {
+                subtotalElement.textContent = formatCurrency(subtotal);
+            } else {
+                subtotalElement.textContent = product ? product.name : 'Item';
+            }
+            
+            updateBudgetTotal();
+        }
+
+        function updateBudgetTotal() {
+            const isBudget = currentBudget.type === 'budget';
+            const itemsTotal = currentBudget.items.reduce((sum, item) => sum + item.subtotal, 0);
+            const adjustmentsTotal = currentBudget.adjustments.reduce((sum, adj) => sum + adj.value, 0);
+            const finalTotal = itemsTotal + adjustmentsTotal;
+            
+            currentBudget.total = finalTotal;
+            
+            const totalElement = document.getElementById('budgetTotal');
+            const totalSection = document.getElementById('budgetTotalSection');
+            const adjustmentsSection = document.getElementById('budgetAdjustments');
+            const adjustmentsList = document.getElementById('adjustmentsList');
+            
+            if (isBudget) {
+                totalElement.textContent = formatCurrency(finalTotal);
+                
+                // Mostrar ajustes se existirem
+                if (currentBudget.adjustments.length > 0) {
+                    adjustmentsSection.style.display = 'block';
+                    adjustmentsList.innerHTML = currentBudget.adjustments.map(adj => `
+                        <div class="adjustment-item">
+                            <span>${adj.value > 0 ? 'Acréscimo' : 'Desconto'}</span>
+                            <span class="${adj.value > 0 ? 'adjustment-positive' : 'adjustment-negative'}">
+                                ${adj.value > 0 ? '+' : ''}${formatCurrency(adj.value)}
+                            </span>
+                        </div>
+                    `).join('');
+                } else {
+                    adjustmentsSection.style.display = 'none';
+                }
+                
+                if (finalTotal > 0 || currentBudget.items.length > 0) {
+                    totalSection.style.display = 'block';
+                } else {
+                    totalSection.style.display = 'none';
+                }
+            } else {
+                totalElement.textContent = `${currentBudget.items.length} item(s)`;
+                adjustmentsSection.style.display = 'none';
+                if (currentBudget.items.length > 0) {
+                    totalSection.style.display = 'block';
+                } else {
+                    totalSection.style.display = 'none';
+                }
+            }
+        }
+
+        function saveBudget() {
+            const clientName = document.getElementById('clientName').value.trim();
+            const budgetDate = document.getElementById('budgetDate').value;
+            const notes = document.getElementById('budgetNotes').value;
+            const isReceipt = currentBudget.type === 'receipt';
+            
+            if (!clientName) {
+                showAlert('Por favor, informe o nome do cliente.', 'danger');
+                return;
+            }
+            
+            if (currentBudget.items.length === 0) {
+                showAlert(`Adicione pelo menos um item ${isReceipt ? 'à nota' : 'ao orçamento'}.`, 'danger');
+                return;
+            }
+
+            const documentData = {
+                id: (isReceipt ? editingReceiptId : editingBudgetId) || Date.now(),
+                client: clientName,
+                date: budgetDate,
+                notes: notes,
+                items: [...currentBudget.items],
+                total: currentBudget.total,
+                images: [...currentBudget.images],
+                type: currentBudget.type,
+                adjustments: [...currentBudget.adjustments],
+                createdAt: new Date().toLocaleString('pt-BR')
+            };
+
+            if (isReceipt) {
+                if (editingReceiptId) {
+                    const receiptIndex = receipts.findIndex(r => r.id === editingReceiptId);
+                    receipts[receiptIndex] = documentData;
+                    showAlert('Nota atualizada com sucesso!', 'success');
+                } else {
+                    receipts.push(documentData);
+                    showAlert('Nota salva com sucesso!', 'success');
+                }
+                displayReceipts();
+            } else {
+                if (editingBudgetId) {
+                    const budgetIndex = budgets.findIndex(b => b.id === editingBudgetId);
+                    budgets[budgetIndex] = documentData;
+                    showAlert('Orçamento atualizado com sucesso!', 'success');
+                } else {
+                    budgets.push(documentData);
+                    showAlert('Orçamento salvo com sucesso!', 'success');
+                }
+                displayBudgets();
+            }
+
+            saveData();
+            resetCurrentBudget();
+        }
+
+        function resetCurrentBudget() {
+            currentBudget = {
+                client: '',
+                date: '',
+                notes: '',
+                items: [],
+                total: 0,
+                images: [],
+                type: 'budget',
+                adjustments: []
+            };
+            
+            document.getElementById('clientName').value = '';
+            document.getElementById('budgetDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('budgetNotes').value = '';
+            document.getElementById('budgetItems').innerHTML = '';
+            document.getElementById('budgetTotalSection').style.display = 'none';
+            document.getElementById('imagesPreview').innerHTML = '';
+            document.getElementById('budgetType').checked = true;
+            editingBudgetId = null;
+            editingReceiptId = null;
+            updateDocumentType();
+        }
+
+        function editBudget(budgetId) {
+            const budget = budgets.find(b => b.id === budgetId);
+            if (!budget) return;
+
+            editingBudgetId = budgetId;
+            loadDocumentForEdit(budget);
+        }
+
+        function editReceipt(receiptId) {
+            const receipt = receipts.find(r => r.id === receiptId);
+            if (!receipt) return;
+
+            editingReceiptId = receiptId;
+            loadDocumentForEdit(receipt);
+        }
+
+        function loadDocumentForEdit(document) {
+            // Definir tipo de documento
+            currentBudget.type = document.type || 'budget';
+            document.getElementById('budgetType').checked = document.type === 'budget';
+            document.getElementById('receiptType').checked = document.type === 'receipt';
+            
+            // Preencher dados
+            document.getElementById('clientName').value = document.client;
+            document.getElementById('budgetDate').value = document.date;
+            document.getElementById('budgetNotes').value = document.notes;
+            
+            // Carregar imagens
+            currentBudget.images = document.images || [];
+            displayImages();
+            
+            // Carregar ajustes
+            currentBudget.adjustments = document.adjustments || [];
+            
+            // Limpar itens existentes
+            document.getElementById('budgetItems').innerHTML = '';
+            currentBudget.items = [];
+            
+            // Adicionar itens do documento
+            document.items.forEach((item, index) => {
+                addBudgetItem();
+                
+                const itemElement = document.querySelector(`[data-index="${index}"]`);
+                itemElement.querySelector('.product-select').value = item.productId;
+                itemElement.querySelector('.quantity-input').value = item.quantity;
+                itemElement.querySelector('.meters-input').value = item.meters;
+                itemElement.querySelector('.notes-input').value = item.notes;
+                
+                updateBudgetItem(index);
+            });
+            
+            updateDocumentType();
+            parseNotesAdjustments();
+            showTab('create-budget');
+            showAlert(`${document.type === 'receipt' ? 'Nota' : 'Orçamento'} carregado para edição!`, 'success');
+        }
+
+        function deleteBudget(budgetId) {
+            if (confirm('Tem certeza que deseja excluir este orçamento?')) {
+                budgets = budgets.filter(b => b.id !== budgetId);
+                saveData();
+                displayBudgets();
+                showAlert('Orçamento excluído com sucesso!', 'success');
+            }
+        }
+
+        function deleteReceipt(receiptId) {
+            if (confirm('Tem certeza que deseja excluir esta nota?')) {
+                receipts = receipts.filter(r => r.id !== receiptId);
+                saveData();
+                displayReceipts();
+                showAlert('Nota excluída com sucesso!', 'success');
+            }
+        }
+
+        function displayBudgets() {
+            const container = document.getElementById('budgetsList');
+            const searchTerm = document.getElementById('budgetSearch').value.toLowerCase();
+            
+            const filteredBudgets = budgets.filter(budget => 
+                budget.client.toLowerCase().includes(searchTerm) ||
+                budget.notes.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredBudgets.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Nenhum orçamento encontrado.</p>';
+                return;
+            }
+
+            container.innerHTML = filteredBudgets.map(budget => `
+                <div class="list-item">
+                    <div class="item-header">
+                        <div class="item-title">🏢 ${budget.client}</div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editBudget(${budget.id})">✏️ Editar</button>
+                            <button class="btn btn-success btn-sm" onclick="generateBudgetPDF(${budget.id})">📄 PDF</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteBudget(${budget.id})">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                    <div class="item-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Data:</span>
+                            <span>${formatDate(budget.date)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Total:</span>
+                            <span style="font-weight: bold; color: #4facfe;">${formatCurrency(budget.total)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Itens:</span>
+                            <span>${budget.items.length} item(s)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Imagens:</span>
+                            <span>${(budget.images || []).length} imagem(ns)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Criado em:</span>
+                            <span>${budget.createdAt}</span>
+                        </div>
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <span class="detail-label">Observações:</span>
+                            <span>${budget.notes || 'Nenhuma observação'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayReceipts() {
+            const container = document.getElementById('receiptsList');
+            const searchTerm = document.getElementById('receiptSearch').value.toLowerCase();
+            
+            const filteredReceipts = receipts.filter(receipt => 
+                receipt.client.toLowerCase().includes(searchTerm) ||
+                receipt.notes.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredReceipts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Nenhuma nota encontrada.</p>';
+                return;
+            }
+
+            container.innerHTML = filteredReceipts.map(receipt => `
+                <div class="list-item">
+                    <div class="item-header">
+                        <div class="item-title">📃 ${receipt.client}</div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editReceipt(${receipt.id})">✏️ Editar</button>
+                            <button class="btn btn-success btn-sm" onclick="generateReceiptPDF(${receipt.id})">📄 PDF</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteReceipt(${receipt.id})">🗑️ Excluir</button>
+                        </div>
+                    </div>
+                    <div class="item-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Data:</span>
+                            <span>${formatDate(receipt.date)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Itens:</span>
+                            <span>${receipt.items.length} item(s)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Imagens:</span>
+                            <span>${(receipt.images || []).length} imagem(ns)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Criado em:</span>
+                            <span>${receipt.createdAt}</span>
+                        </div>
+                        <div class="detail-item" style="grid-column: 1 / -1;">
+                            <span class="detail-label">Observações:</span>
+                            <span>${receipt.notes || 'Nenhuma observação'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchBudgets() {
+            displayBudgets();
+        }
+
+        function searchReceipts() {
+            displayReceipts();
+        }
+
+        // Geração de PDF
+        function generatePDF() {
+            const clientName = document.getElementById('clientName').value.trim();
+            const budgetDate = document.getElementById('budgetDate').value;
+            const notes = document.getElementById('budgetNotes').value;
+            const isReceipt = currentBudget.type === 'receipt';
+            
+            if (!clientName || currentBudget.items.length === 0) {
+                showAlert(`Complete os dados ${isReceipt ? 'da nota' : 'do orçamento'} antes de gerar o PDF.`, 'danger');
+                return;
+            }
+
+            const documentData = {
+                client: clientName,
+                date: budgetDate,
+                notes: notes,
+                items: currentBudget.items,
+                total: currentBudget.total,
+                images: currentBudget.images,
+                type: currentBudget.type,
+                adjustments: currentBudget.adjustments
+            };
+
+            createPDF(documentData);
+        }
+
+        function generateBudgetPDF(budgetId) {
+            const budget = budgets.find(b => b.id === budgetId);
+            if (budget) {
+                createPDF(budget);
+            }
+        }
+
+        function generateReceiptPDF(receiptId) {
+            const receipt = receipts.find(r => r.id === receiptId);
+            if (receipt) {
+                createPDF(receipt);
+            }
+        }
+
+        function createPDF(documentData) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Configurações
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+            const margin = 20;
+            let yPos = 30;
+            const isReceipt = documentData.type === 'receipt';
+            
+            // Cabeçalho
+            doc.setFontSize(55);
+            doc.setTextColor(220, 38, 38);
+            doc.text('Atelier PA', pageWidth / 2, yPos, { align: 'center' });
+            
+            yPos += 15;
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text(`${isReceipt ? 'Nota/Recibo' : 'Orçamento'} abaixo:`, pageWidth / 2, yPos, { align: 'center' });
+            
+            // Linha separadora
+            yPos += 15;
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(200);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            
+            yPos += 20;
+            
+            // Informações do cliente
+            doc.setFontSize(14);
+            doc.setTextColor(50);
+            doc.text('DADOS DO CLIENTE:', margin, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.text(`Cliente: ${documentData.client}`, margin, yPos);
+            
+            yPos += 8;
+            doc.text(`Data: ${formatDate(documentData.date)}`, margin, yPos);
+            
+            if (documentData.notes) {
+                yPos += 8;
+                const notesLines = doc.splitTextToSize(`Observações: ${documentData.notes}`, pageWidth - 2 * margin);
+                doc.text(notesLines, margin, yPos);
+                yPos += notesLines.length * 6;
+            }
+            
+            yPos += 20;
+            
+            // Cabeçalho da tabela
+            doc.setFontSize(14);
+            doc.setTextColor(50);
+            doc.text(`ITENS ${isReceipt ? 'DA NOTA' : 'DO ORÇAMENTO'}:`, margin, yPos);
+            
+            yPos += 15;
+            
+            // Tabela de itens
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            
+            // Cabeçalhos da tabela
+            const tableHeaders = isReceipt ? 
+                ['Item', 'Qtd', 'Metros', 'Observações'] :
+                ['Item', 'Qtd', 'Metros', 'Preço Unit.', 'Preço Metro', 'Subtotal'];
+            const colWidths = isReceipt ? 
+                [80, 25, 30, 50] :
+                [60, 20, 25, 25, 25, 30];
+            let xPos = margin;
+            
+            // Verificar se precisa de nova página
+            if (yPos > 220) {
+                doc.addPage();
+                yPos = 30;
+            }
+            
+            // Desenhar cabeçalhos
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 10, 'F');
+            
+            tableHeaders.forEach((header, index) => {
+                doc.text(header, xPos + 2, yPos);
+                xPos += colWidths[index];
+            });
+            
+            yPos += 12;
+            
+            // Dados da tabela
+            documentData.items.forEach((item) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 30;
+                }
+                
+                xPos = margin;
+                const rowData = isReceipt ? [
+                    item.product?.name || 'N/A',
+                    item.quantity.toString(),
+                    item.meters > 0 ? item.meters.toString() : '-',
+                    item.notes || '-'
+                ] : [
+                    item.product?.name || 'N/A',
+                    item.quantity.toString(),
+                    item.meters > 0 ? item.meters.toString() : '-',
+                    item.product ? formatCurrency(item.product.pricePerUnit) : '-',
+                    item.product && item.product.pricePerMeter > 0 ? formatCurrency(item.product.pricePerMeter) : '-',
+                    formatCurrency(item.subtotal)
+                ];
+                
+                rowData.forEach((data, index) => {
+                    doc.text(data, xPos + 2, yPos);
+                    xPos += colWidths[index];
+                });
+                
+                yPos += 10;
+            });
+            
+            // Subtotal e ajustes (apenas para orçamentos)
+            if (!isReceipt) {
+                yPos += 10;
+                doc.setLineWidth(0.5);
+                doc.line(margin, yPos, pageWidth - margin, yPos);
+                yPos += 15;
+                
+                // Subtotal dos itens
+                const itemsTotal = documentData.items.reduce((sum, item) => sum + item.subtotal, 0);
+                doc.setFontSize(12);
+                doc.setTextColor(50);
+                doc.text(`Subtotal dos Itens: ${formatCurrency(itemsTotal)}`, pageWidth - margin, yPos, { align: 'right' });
+                yPos += 10;
+                
+                // Mostrar ajustes se existirem
+                if (documentData.adjustments && documentData.adjustments.length > 0) {
+                    documentData.adjustments.forEach(adj => {
+                        const adjustmentText = adj.value > 0 ? 'Acréscimo' : 'Desconto';
+                        doc.text(`${adjustmentText}: ${adj.value > 0 ? '+' : ''}${formatCurrency(adj.value)}`, pageWidth - margin, yPos, { align: 'right' });
+                        yPos += 8;
+                    });
+                    yPos += 5;
+                }
+                
+                // Total final
+                doc.setFontSize(16);
+                doc.setTextColor(220, 38, 38);
+                doc.text(`TOTAL: ${formatCurrency(documentData.total)}`, pageWidth - margin, yPos, { align: 'right' });
+            }
+            
+            // Adicionar imagens em nova página se existirem
+            if (documentData.images && documentData.images.length > 0) {
+                doc.addPage();
+                yPos = 30;
+                
+                doc.setFontSize(14);
+                doc.setTextColor(50);
+                doc.text('IMAGENS:', margin, yPos);
+                yPos += 20;
+                
+                const imagesPerRow = 2;
+                const imageWidth = (pageWidth - 3 * margin) / imagesPerRow;
+                const imageHeight = imageWidth * 0.75; // Proporção 4:3
+                let currentRow = 0;
+                let currentCol = 0;
+                
+                documentData.images.forEach((image, index) => {
+                    const xPosition = margin + (currentCol * (imageWidth + margin));
+                    const yPosition = yPos + (currentRow * (imageHeight + 20));
+                    
+                    // Verificar se precisa de nova página
+                    if (yPosition + imageHeight > pageHeight - margin) {
+                        doc.addPage();
+                        yPos = 30;
+                        currentRow = 0;
+                        currentCol = 0;
+                    }
+                    
+                    try {
+                        // Adicionar imagem redimensionada
+                        doc.addImage(image.data, 'JPEG', xPosition, yPosition, imageWidth, imageHeight);
+                    } catch (e) {
+                        console.log('Erro ao adicionar imagem:', e);
+                        // Adicionar retângulo de placeholder se não conseguir adicionar a imagem
+                        doc.setDrawColor(200);
+                        doc.rect(xPosition, yPosition, imageWidth, imageHeight);
+                        doc.text('Erro ao carregar imagem', xPosition + imageWidth/2, yPosition + imageHeight/2, { align: 'center' });
+                    }
+                    
+                    currentCol++;
+                    if (currentCol >= imagesPerRow) {
+                        currentCol = 0;
+                        currentRow++;
+                    }
+                });
+            }
+            
+            // Rodapé na última página
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.setTextColor(120);
+                doc.text('Contato: WhatsApp 81 98602-3728 | Instagram @atelierpavitoria', pageWidth / 2, pageHeight - 15, { align: 'center' });
+                doc.setTextColor(255, 0, 0);
+                doc.text('Chave Pix: 81999293299', pageWidth / 2, pageHeight - 10, { align: 'center' });
+            }
+            
+            
+            // Salvar PDF
+            const fileName = `${isReceipt ? 'Nota' : 'Orcamento'}_${documentData.client.replace(/[^a-zA-Z0-9]/g, '_')}_${documentData.date}.pdf`;
+            doc.save(fileName);
+            
+            showAlert('PDF gerado com sucesso!', 'success');
+        }
+
+        // Funções utilitárias
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value || 0);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function showAlert(message, type) {
+            // Remove alertas existentes
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Cria novo alerta
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const content = document.querySelector('.content');
+            content.insertBefore(alertDiv, content.firstChild);
+            
+            // Remove alerta após 5 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Event listeners para fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('productModal');
+            if (event.target === modal) {
+                closeProductModal();
+            }
+        }
+
+        // Inicializar primeiro item
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (document.getElementById('budgetItems').children.length === 0) {
+                    addBudgetItem();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
